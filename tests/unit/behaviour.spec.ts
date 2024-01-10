@@ -473,4 +473,34 @@ describe('It should validate various picker scenarios', () => {
             [{ month: getMonth(yearStart), year: getYear(yearStart) }],
         ]);
     });
+
+    it('Should update days when crossing midnight on increment hours', async () => {
+        const today = resetDateTime(new Date());
+        const nextDay = addDays(today, 1);
+        const dp = await openMenu({
+            enableTimePicker: true,
+            autoApply: true,
+            modelValue: today,
+            config: {
+                closeOnAutoApply: false,
+            },
+        });
+
+        const openTimePickerBtn = await dp.find(`[data-test="open-time-picker-btn"]`);
+        await openTimePickerBtn.trigger('click');
+
+        const incBtn = await dp.find(`[data-test="hours-time-inc-btn-0"]`);
+
+        const expectedEmitted = [];
+        for (let i = 0; i < 24; i++) {
+            await incBtn.trigger('click');
+            expectedEmitted.push([addHours(today, i + 1)]);
+        }
+
+        const emitted = dp.emitted()['update:model-value'];
+        expect(emitted).toEqual(expectedEmitted);
+        expect(emitted.at(-1)).toEqual([nextDay]);
+
+        dp.unmount();
+    });
 });
